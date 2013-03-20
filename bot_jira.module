@@ -1,0 +1,67 @@
+<?php
+
+/**
+ * @file
+ * Jira.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function bot_jira_menu() {
+  $items = array();
+
+  $items['admin/config/bot/jira'] = array(
+    'title' => 'Jira',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bot_jira_settings'),
+    'access arguments' => array('administer bot'),
+  );
+
+  return $items;
+}
+
+function bot_jira_settings() {
+  $form = array();
+
+  $form['bot_jira'] = array(
+    '#collapsed'      => FALSE,
+    '#collapsible'    => TRUE,
+    '#title'          => t('JIRA settings'),
+    '#type'           => 'fieldset',
+  );
+  $form['bot_jira']['jira_match'] = array(
+    '#default_value'  => variable_get('jira_match', 'JIRA-'),
+    '#description'    => t('Enter the JIRA project name which prefixes all issues (ex: DRUPAL-). Please include trailing dash.'),
+    '#title'          => t('Project prefix'),
+    '#type'           => 'textfield',
+  );
+  $form['bot_jira']['jira_url'] = array(
+    '#default_value'  => variable_get('jira_url', 'https://'),
+    '#description'    => t('Enter the address of your JIRA instance. (ex: https://whatever.myjira.com/browse/). Please include trailing "/browse/".'),
+    '#title'          => t('Project URL'),
+    '#type'           => 'textfield',
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Listen for Jira ticket numbers and provide a link.
+ *
+ * @param $data
+ *   The regular $data object prepared by the IRC library.
+ * @param $from_query
+ *   Boolean; whether this was a queried request.
+ */
+function bot_jira_irc_msg_channel($data) {
+  global $irc;
+
+  // Change the match and url for your project.
+  $match = variable_get('jira_match', 'JIRA-');
+  $url = variable_get('jira_url', 'https://whatever.myjira.com/browse/');
+
+  if (preg_match('/(^|\s)' . $match . '\d{1,}($|\s)/i', $data->message, $matches)) {
+    bot_message($data->channel, $url . trim($matches[0]));
+  }
+}

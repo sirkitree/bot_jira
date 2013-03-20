@@ -1,0 +1,5 @@
+name = Bot Jira
+description = Jira integration.
+package = Bot
+dependencies[] = bot
+core = 7.x
