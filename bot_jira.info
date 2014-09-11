@@ -2,4 +2,5 @@ name = Bot Jira
 description = Jira integration.
 package = Bot
 dependencies[] = bot
+configure = admin/config/bot/jira
 core = 7.x

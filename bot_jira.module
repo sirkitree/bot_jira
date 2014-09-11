@@ -13,6 +13,7 @@ function bot_jira_menu() {
 
   $items['admin/config/bot/jira'] = array(
     'title' => 'Jira',
+    'description' => 'Configure prefix and path for Jira.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('bot_jira_settings'),
     'access arguments' => array('administer bot'),
@@ -20,6 +21,21 @@ function bot_jira_menu() {
 
   return $items;
 }
+
+/**
+ * Implements hook_help().
+ */
+function bot_jira_help($path, $arg) {
+  switch ($path) {
+  case 'irc:features':
+    return array(t('Jira'));
+  case 'irc:features#jira':
+    $helpstring = t('When you type down a Jira prefix the bot will reply with a direct link to the issue. The current accepted prefix is ');
+    $helpstring .= variable_get('jira_match');
+    return $helpstring;
+  }
+}
+
 
 function bot_jira_settings() {
   $form = array();
@@ -32,7 +48,7 @@ function bot_jira_settings() {
   );
   $form['bot_jira']['jira_match'] = array(
     '#default_value'  => variable_get('jira_match', 'JIRA-'),
-    '#description'    => t('Enter the JIRA project name which prefixes all issues (ex: DRUPAL-). Please include trailing dash.'),
+    '#description'    => t('Enter the JIRA project name which prefixes all issues (ex: DRUPAL-). Please include trailing dash. Seperate entries by a come (ex: JIRA-,DRUPAL-,BOT-) without spaces.'),
     '#title'          => t('Project prefix'),
     '#type'           => 'textfield',
   );
@@ -58,10 +74,12 @@ function bot_jira_irc_msg_channel($data) {
   global $irc;
 
   // Change the match and url for your project.
-  $match = variable_get('jira_match', 'JIRA-');
+  $prefixes = explode(",",variable_get('jira_match','JIRA-'));
   $url = variable_get('jira_url', 'https://whatever.myjira.com/browse/');
 
-  if (preg_match('/(^|\s)' . $match . '\d{1,}($|\s)/i', $data->message, $matches)) {
-    bot_message($data->channel, $url . trim($matches[0]));
+  foreach ($prefixes as $match) {
+    if (preg_match('/(^|\s)' . $match . '\d{1,}($|\s)/i', $data->message, $matches)) {
+      bot_message($data->channel, $url . trim($matches[0]));
+    }
   }
 }
